@@ -7,6 +7,8 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
       'X-FC26-Client': 'local-web',
       ...options.headers,
     },
+  }).catch(() => {
+    throw new Error('The local backend is unavailable. Start the API server and try again.');
   });
   if (!response.ok) {
     const result = await response.json().catch(() => null);

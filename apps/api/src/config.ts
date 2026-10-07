@@ -3,7 +3,11 @@ import { loadEnvFile } from 'node:process';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 let candidate = resolve(fileURLToPath(new URL('.', import.meta.url)));
-while (!existsSync(join(candidate, 'ADR_001_FC26_CAREER_ANALYZER.md'))) {
+while (
+  !existsSync(join(candidate, 'package.json')) ||
+  !existsSync(join(candidate, 'apps/api/package.json')) ||
+  !existsSync(join(candidate, 'parser/src/main.py'))
+) {
   const parent = resolve(candidate, '..');
   if (parent === candidate) throw new Error('Project root not found');
   candidate = parent;

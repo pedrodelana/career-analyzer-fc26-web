@@ -1,6 +1,6 @@
 # FC26 Career Analyzer
 
-A local, read-only EA SPORTS FC 26 Manager Career analyzer. The application and Excel workbooks use **English**. Built with React, TypeScript, Vite, Tailwind, Fastify, Python and SQLite.
+A local, read-only EA SPORTS FC 26 Manager Career analyzer. The interface supports **English, Español and Português (Brasil)**; English is the initial default. Excel workbooks use English. Built with React, TypeScript, Vite, Tailwind, Fastify, Python and SQLite.
 
 ## Start on this computer
 
@@ -11,6 +11,8 @@ npm.cmd run dev
 ```
 
 Open **http://127.0.0.1:5173**. The API listens on **http://127.0.0.1:3001**. Keep the terminal running; press `Ctrl+C` to stop both servers.
+
+Choose **Settings → Language → Interface language** to change the interface immediately. The preference is saved in this browser and synchronized across tabs on the same origin. It does not require saving local folder settings. Translations live in `apps/web/src/locales/`; the React language provider also formats dates, numbers and football positions. Original club/player names and unknown technical diagnostics retain their source text.
 
 To run the servers separately, use two terminals in the project folder:
 

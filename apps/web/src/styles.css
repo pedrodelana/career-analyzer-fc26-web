@@ -1330,6 +1330,13 @@ tbody tr:last-child td {
   grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr);
   gap: 25px;
 }
+.language-panel {
+  margin-bottom: 25px;
+}
+.language-panel select {
+  width: 100%;
+  max-width: 360px;
+}
 .settings-fields {
   padding: 0 25px 25px;
   display: grid;

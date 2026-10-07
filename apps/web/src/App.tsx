@@ -45,12 +45,11 @@ import type {
 } from '../../../packages/shared/src/domain';
 import {
   POSITION_ORDER,
-  POSITION_LABELS,
   sortPlayers,
-  formatBirthDate,
   type CareerSettings,
 } from '../../../packages/shared/src/domain';
 import { api } from './api';
+import { useI18n, languages, isLocale } from './i18n';
 
 type Page = 'library' | 'overview' | 'first' | 'youth' | 'development' | 'settings';
 type Filter = {
@@ -79,13 +78,7 @@ const initialFilter = (): Filter => ({
   direction: 'asc',
   cards: false,
 });
-const date = (value: string | null | undefined) =>
-  value
-    ? new Date(value).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
-    : 'N/A';
 const value = (input: number | string | null | undefined) => input ?? 'N/A';
-const money = (input: number | null) =>
-  input == null ? 'N/A' : input.toLocaleString('en-GB', { maximumFractionDigits: 0 });
 const initials = (name: string) =>
   name
     .split(' ')
@@ -95,12 +88,13 @@ const initials = (name: string) =>
     .join('')
     .toUpperCase();
 function Avatar({ player, large = false }: { player: CareerPlayer; large?: boolean }) {
+  const { t } = useI18n();
   return (
     <span className={`avatar ${large ? 'large' : ''}`}>
       {player.image ? (
         <img
           src={player.image.url}
-          alt={`${player.displayName} portrait`}
+          alt={t('{player} portrait', { player: player.displayName })}
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
@@ -145,6 +139,7 @@ function CareerSettingsForm({
   onClose: () => void;
   onSave: (values: { saveId: string; clubName?: string }) => Promise<void>;
 }) {
+  const { t, message } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   const [clubName, setClubName] = useState(settings.clubName);
   useEffect(() => {
@@ -172,11 +167,11 @@ function CareerSettingsForm({
         }}
       >
         <div className="panel-heading">
-          <h2 id="career-settings-title">Career settings</h2>
+          <h2 id="career-settings-title">{t('Career settings')}</h2>
           <button
             type="button"
             className="text-button"
-            aria-label="Close career settings"
+            aria-label={t('Close career settings')}
             disabled={disabled}
             onClick={onClose}
           >
@@ -185,12 +180,12 @@ function CareerSettingsForm({
         </div>
         {error && (
           <p className="banner error" role="alert">
-            {error}
+            {message(error)}
           </p>
         )}
         <div className="settings-fields">
           <label>
-            Club name
+            {t('Club name')}{' '}
             <input
               autoFocus
               required
@@ -202,26 +197,29 @@ function CareerSettingsForm({
             />
             <small>
               {settings.automaticClubName
-                ? 'Name recovered automatically from this save. Manual naming is available if extraction fails.'
+                ? t(
+                    'Name recovered automatically from this save. Manual naming is available if extraction fails.',
+                  )
                 : settings.clubNameSource === 'UNRESOLVED'
-                  ? 'The save has no verified club name. Enter it to open this career.'
-                  : 'Name source: ' +
-                    (settings.clubNameSource === 'USER' ? 'entered by you' : 'save file') +
+                  ? t('The save has no verified club name. Enter it to open this career.')
+                  : t('Name source: ') +
+                    (settings.clubNameSource === 'USER' ? t('entered by you') : t('save file')) +
                     '.'}{' '}
-              Saved for this career only.
+              {t('Saved for this career only.')}{' '}
             </small>
           </label>
           <p className="muted">
-            Player ages are calculated automatically as of the last completed match found in the
-            save. No date entry is needed.
+            {t(
+              'Player ages are calculated automatically as of the last completed match found in the save. No date entry is needed.',
+            )}{' '}
           </p>
         </div>
         <div className="settings-submit">
           <button type="button" className="button" onClick={onClose} disabled={disabled}>
-            Cancel
+            {t('Cancel')}{' '}
           </button>
           <button className="button primary" type="submit" disabled={disabled || !clubName.trim()}>
-            {openAfterSave ? 'Save & open' : 'Save career settings'}
+            {openAfterSave ? t('Save & open') : t('Save career settings')}
           </button>
         </div>
       </form>
@@ -230,6 +228,7 @@ function CareerSettingsForm({
 }
 
 export function App() {
+  const { t, date, formatBirthDate, number, message } = useI18n();
   const [page, setPage] = useState<Page>('library');
   const [careers, setCareers] = useState<Career[]>([]);
   const [previous, setPrevious] = useState<Selection | null>(null);
@@ -340,22 +339,22 @@ export function App() {
     setError('');
   }
   const nav = [
-    { id: 'library', label: 'Careers', icon: Library },
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'first', label: 'First team', icon: Users },
-    { id: 'youth', label: 'Youth academy', icon: TrendingUp },
-    { id: 'development', label: 'Development', icon: Activity },
+    { id: 'library', label: t('Careers'), icon: Library },
+    { id: 'overview', label: t('Overview'), icon: LayoutDashboard },
+    { id: 'first', label: t('First team'), icon: Users },
+    { id: 'youth', label: t('Youth academy'), icon: TrendingUp },
+    { id: 'development', label: t('Development'), icon: Activity },
   ] as const;
   const data = current?.data;
   const title = player
     ? player.displayName
     : {
-        library: 'Your career library',
-        overview: 'Career overview',
-        first: 'First team',
-        youth: 'Youth academy',
-        development: 'Player development',
-        settings: 'Settings',
+        library: t('Your career library'),
+        overview: t('Career overview'),
+        first: t('First team'),
+        youth: t('Youth academy'),
+        development: t('Player development'),
+        settings: t('Settings'),
       }[page];
   return (
     <div className="app-shell">
@@ -367,15 +366,15 @@ export function App() {
             e.preventDefault();
             navigate('library');
           }}
-          aria-label="FC26 Career Lens home"
+          aria-label={t('FC26 Career Lens home')}
         >
           <img className="brand-mark" src="/images/logo_fcl_hd.png" alt="" />
           <span>
             FC26<span className="brand-sub">CAREER LENS</span>
           </span>
         </a>
-        <div className="workspace-label">WORKSPACE</div>
-        <nav aria-label="Main navigation">
+        <div className="workspace-label">{t('WORKSPACE')}</div>
+        <nav aria-label={t('Main navigation')}>
           {nav.map((item) => (
             <button
               key={item.id}
@@ -400,7 +399,8 @@ export function App() {
           <div className="local-card">
             <ShieldCheck size={19} />
             <div>
-              Made for your career<small>Local. Private. Read-only.</small>
+              {t('Made for your career')}
+              <small>{t('Local. Private. Read-only.')}</small>
             </div>
           </div>
           <button
@@ -409,40 +409,42 @@ export function App() {
             onClick={() => navigate('settings')}
           >
             <Settings2 size={19} />
-            Settings
+            {t('Settings')}{' '}
           </button>
           <div className="version">
             <span className="status-dot" />
-            LOCAL WORKSPACE <span>v0.1</span>
+            {t('LOCAL WORKSPACE')} <span>v0.1</span>
           </div>
         </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
-            Workspace <ChevronRight size={14} />
+            {t('Workspace')} <ChevronRight size={14} />
             <span>
-              {page === 'library' ? 'Careers' : (current?.save.metadata.clubName ?? 'Settings')}
+              {page === 'library'
+                ? t('Careers')
+                : (current?.save.metadata.clubName ?? t('Settings'))}
             </span>
           </div>
           <div className="topbar-status">
-            <span className="status-dot" /> Offline ready <span className="divider" />
-            <HardDrive size={15} /> On this device
+            <span className="status-dot" /> {t('Offline ready')} <span className="divider" />
+            <HardDrive size={15} /> {t('On this device')}{' '}
           </div>
         </header>
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">EA SPORTS FC 26 / MANAGER CAREER</div>
+              <div className="eyebrow">{t('EA SPORTS FC 26 / MANAGER CAREER')}</div>
               <h1>{title}</h1>
               <p>
                 {page === 'library'
-                  ? 'Every save. One place to understand your squad.'
+                  ? t('Every save. One place to understand your squad.')
                   : page === 'settings'
-                    ? 'Connect your local files and keep your workspace ready.'
+                    ? t('Connect your local files and keep your workspace ready.')
                     : player
-                      ? 'A closer look at the selected player record.'
-                      : 'A clear view of your squad, your prospects and what comes next.'}
+                      ? t('A closer look at the selected player record.')
+                      : t('A clear view of your squad, your prospects and what comes next.')}
               </p>
             </div>
             <div className="heading-actions">
@@ -456,18 +458,20 @@ export function App() {
                         method: 'POST',
                       });
                       await loadLibrary();
-                      setNotice(`Library updated. ${result.files} saves found.`);
+                      setNotice(
+                        t('Library updated. {count} saves found.', { count: result.files }),
+                      );
                     })
                   }
                 >
                   <RefreshCw size={16} />
-                  Scan for saves
+                  {t('Scan for saves')}{' '}
                 </button>
               ) : current && page !== 'settings' ? (
                 <>
                   <button className="button" disabled={!!busy} onClick={() => void refresh()}>
                     <RefreshCw size={16} />
-                    Refresh save
+                    {t('Refresh save')}{' '}
                   </button>
                   <button
                     className="button primary"
@@ -495,7 +499,7 @@ export function App() {
                     }
                   >
                     <Download size={16} />
-                    Export Excel
+                    {t('Export Excel')}{' '}
                   </button>
                 </>
               ) : null}
@@ -504,14 +508,14 @@ export function App() {
           {busy && (
             <div className="banner loading" role="status">
               <RefreshCw size={17} className="spin" />
-              {busy}
+              {message(busy)}
             </div>
           )}
           {error && (
             <div className="banner error" role="alert">
               <AlertTriangle size={18} />
-              <span>{error}</span>
-              <button aria-label="Dismiss error" onClick={() => setError('')}>
+              <span>{message(error)}</span>
+              <button aria-label={t('Dismiss error')} onClick={() => setError('')}>
                 <X size={16} />
               </button>
             </div>
@@ -519,7 +523,7 @@ export function App() {
           {notice && (
             <div className="banner success" role="status">
               <Check size={17} />
-              {notice}
+              {message(notice)}
             </div>
           )}
           {page === 'library' && (
@@ -531,7 +535,7 @@ export function App() {
                   </span>
                   <div>
                     <strong>{careers.length.toString().padStart(2, '0')}</strong>
-                    <span>Career entries</span>
+                    <span>{t('Career entries')}</span>
                   </div>
                 </div>
                 <div>
@@ -545,7 +549,7 @@ export function App() {
                         .toString()
                         .padStart(2, '0')}
                     </strong>
-                    <span>Available saves</span>
+                    <span>{t('Available saves')}</span>
                   </div>
                 </div>
                 <div>
@@ -553,23 +557,23 @@ export function App() {
                     <ShieldCheck size={21} />
                   </span>
                   <div>
-                    <strong className="text-stat">Read-only</strong>
-                    <span>Your original saves stay intact</span>
+                    <strong className="text-stat">{t('Read-only')}</strong>
+                    <span>{t('Your original saves stay intact')}</span>
                   </div>
                 </div>
               </div>
               <div className="section-heading">
                 <div>
                   <h2>
-                    Choose a career <span className="count">{careers.length}</span>
+                    {t('Choose a career')} <span className="count">{careers.length}</span>
                   </h2>
-                  <p>Select a career to explore its first team and academy.</p>
+                  <p>{t('Select a career to explore its first team and academy.')}</p>
                 </div>
                 <label className="search">
                   <Search size={17} />
                   <input
-                    aria-label="Search careers"
-                    placeholder="Search club or save…"
+                    aria-label={t('Search careers')}
+                    placeholder={t('Search club or save…')}
                     value={librarySearch}
                     onChange={(e) => setLibrarySearch(e.target.value)}
                   />
@@ -578,7 +582,7 @@ export function App() {
               {previous && careers.some((career) => career.id === previous.careerId) && (
                 <div className="previous-selection">
                   <Clock3 size={16} />
-                  <span>Previous selection is saved. Choose a career to continue.</span>
+                  <span>{t('Previous selection is saved. Choose a career to continue.')}</span>
                   <button
                     disabled={!!busy}
                     onClick={() =>
@@ -588,22 +592,22 @@ export function App() {
                       )
                     }
                   >
-                    Continue <ArrowRight size={14} />
+                    {t('Continue')} <ArrowRight size={14} />
                   </button>
                 </div>
               )}
               {!careers.length ? (
                 <div className="panel">
-                  <Empty icon={<FolderOpen size={34} />} title="Your next chapter starts here">
-                    <p>Scan your FC26 settings folder to find Manager Career saves.</p>
-                    <p>No saves yet? Set your save folder in Settings.</p>
+                  <Empty icon={<FolderOpen size={34} />} title={t('Your next chapter starts here')}>
+                    <p>{t('Scan your FC26 settings folder to find Manager Career saves.')}</p>
+                    <p>{t('No saves yet? Set your save folder in Settings.')}</p>
                     <button
                       className="button"
                       disabled={!!busy}
                       onClick={() => navigate('settings')}
                     >
                       <Settings2 size={16} />
-                      Open settings
+                      {t('Open settings')}{' '}
                     </button>
                   </Empty>
                 </div>
@@ -635,19 +639,19 @@ export function App() {
                             }
                           >
                             {career.identityStatus === 'CONFIRMED'
-                              ? 'Verified career'
+                              ? t('Verified career')
                               : career.identityStatus === 'ERROR'
-                                ? 'Metadata error'
-                                : 'Identity unconfirmed'}
+                                ? t('Metadata error')
+                                : t('Identity unconfirmed')}
                           </Badge>
                         </div>
                         <div className="career-number">
-                          CAREER ENTRY {String(index + 1).padStart(2, '0')}
+                          {t('CAREER ENTRY')} {String(index + 1).padStart(2, '0')}
                         </div>
                         <h3>{career.clubName}</h3>
                         {career.latestSave.metadata.clubNameSource === 'UNRESOLVED' && (
                           <p className="inline-warning">
-                            Club name required before opening this career.
+                            {t('Club name required before opening this career.')}{' '}
                           </p>
                         )}
                         <div className="career-id">
@@ -657,22 +661,22 @@ export function App() {
                           </span>
                         </div>
                         <div className="save-preview">
-                          <div className="caption">LATEST AVAILABLE SAVE</div>
+                          <div className="caption">{t('LATEST AVAILABLE SAVE')}</div>
                           <div className="file-name" title={career.latestSave.fileName}>
                             {career.latestSave.fileName}
                           </div>
                           <div className="save-meta">
                             <Clock3 size={13} />
                             {date(career.latestSave.modifiedAt)}
-                            <span>· {(career.latestSave.size / 1024 / 1024).toFixed(1)} MB</span>
+                            <span>· {number(career.latestSave.size / 1024 / 1024, 1)} MB</span>
                           </div>
                         </div>
                         {career.latestSave.error && (
-                          <p className="inline-warning">{career.latestSave.error}</p>
+                          <p className="inline-warning">{message(career.latestSave.error)}</p>
                         )}
                         {career.latestSave.missing && (
                           <p className="inline-warning">
-                            Save file is missing. Snapshots are preserved.
+                            {t('Save file is missing. Snapshots are preserved.')}{' '}
                           </p>
                         )}
                         <div className="card-actions">
@@ -684,14 +688,14 @@ export function App() {
                             onClick={() => void selectCareer(career.id)}
                           >
                             {career.latestSave.metadata.clubNameSource === 'UNRESOLVED'
-                              ? 'Name club & open'
-                              : 'Use career'}{' '}
+                              ? t('Name club & open')
+                              : t('Use career')}{' '}
                             <ArrowRight size={16} />
                           </button>
                           <button
                             className="icon-button"
                             disabled={!!busy}
-                            aria-label={`View saves for ${career.clubName}`}
+                            aria-label={t('View saves for {club}', { club: career.clubName })}
                             onClick={() => {
                               if (expanded === career.id) setExpanded(null);
                               else void showSaves(career.id);
@@ -705,7 +709,7 @@ export function App() {
                           disabled={!!busy || career.latestSave.metadata.clubId == null}
                           onClick={() => void editCareer(career.id)}
                         >
-                          Career settings
+                          {t('Career settings')}{' '}
                         </button>
                         {expanded === career.id && (
                           <SaveChoices
@@ -721,9 +725,10 @@ export function App() {
               <div className="info-strip">
                 <ShieldCheck size={19} />
                 <p>
-                  <strong>Your save is the source of truth.</strong> Careers are grouped only when
-                  their identity is verified. Unconfirmed saves stay separate, even when they share
-                  a club.
+                  <strong>{t('Your save is the source of truth.')}</strong>{' '}
+                  {t(
+                    'Careers are grouped only when their identity is verified. Unconfirmed saves stay separate, even when they share a club.',
+                  )}{' '}
                 </p>
               </div>
             </>
@@ -737,25 +742,26 @@ export function App() {
                   onClick={() => void editCareer(current.careerId, current.save.id)}
                 >
                   <Settings2 size={15} />
-                  Career settings
+                  {t('Career settings')}{' '}
                 </button>
                 <span className="mini-emblem">{initials(current.save.metadata.clubName)}</span>
                 <div className="context-club">
                   <strong>{current.save.metadata.clubName}</strong>
                   <span title={current.careerId}>
-                    Active career · {current.careerId.slice(0, 24)}…
+                    {t('Active career ·')} {current.careerId.slice(0, 24)}…
                   </span>
                 </div>
                 <div className="context-save">
                   <span>
-                    SELECTED SAVE · {current.mode === 'PINNED_SAVE' ? 'PINNED' : 'LATEST IN CAREER'}
+                    {t('SELECTED SAVE ·')}{' '}
+                    {current.mode === 'PINNED_SAVE' ? t('PINNED') : t('LATEST IN CAREER')}
                   </span>
                   <strong title={current.save.fileName}>{current.save.fileName}</strong>
                   <small>
-                    Modified {date(current.save.modifiedAt)} · Ages as of{' '}
+                    {t('Modified')} {date(current.save.modifiedAt)} {t('· Ages as of')}{' '}
                     {current.data?.careerDateInfo?.referenceDate
                       ? formatBirthDate(current.data.careerDateInfo.referenceDate)
-                      : 'Unavailable'}
+                      : t('Unavailable')}
                   </small>
                 </div>
                 <button
@@ -766,12 +772,12 @@ export function App() {
                     if (!savePicker) void showSaves(current.careerId);
                   }}
                 >
-                  Choose another save <ChevronDown size={14} />
+                  {t('Choose another save')} <ChevronDown size={14} />
                 </button>
                 <button
                   className="icon-button"
-                  title="Switch career"
-                  aria-label="Switch career"
+                  title={t('Switch career')}
+                  aria-label={t('Switch career')}
                   disabled={!!busy}
                   onClick={() => navigate('library')}
                 >
@@ -780,14 +786,17 @@ export function App() {
               </div>
               {savePicker && (
                 <div className="panel save-picker">
-                  <h3>Choose a save</h3>
-                  <p>Latest available: {current.latestSave?.fileName ?? 'No available file'}</p>
+                  <h3>{t('Choose a save')}</h3>
+                  <p>
+                    {t('Latest available:')}{' '}
+                    {current.latestSave?.fileName ?? t('No available file')}
+                  </p>
                   <button
                     className="button small"
                     disabled={!!busy}
                     onClick={() => void selectCareer(current.careerId)}
                   >
-                    Follow latest in this career
+                    {t('Follow latest in this career')}{' '}
                   </button>
                   <SaveChoices
                     saves={saveList}
@@ -800,8 +809,10 @@ export function App() {
                 <div className="banner warning">
                   <AlertTriangle size={18} />
                   {current.save.missing
-                    ? 'The selected file is missing. Choose another save explicitly.'
-                    : 'This file has not been imported or differs from the last imported snapshot. Refresh to analyze it.'}
+                    ? t('The selected file is missing. Choose another save explicitly.')
+                    : t(
+                        'This file has not been imported or differs from the last imported snapshot. Refresh to analyze it.',
+                      )}
                 </div>
               )}
               {data && (
@@ -836,14 +847,16 @@ export function App() {
               {current.imageWarnings.map((warning, index) => (
                 <div className="banner warning" key={index}>
                   <AlertTriangle size={17} />
-                  {warning}
+                  {message(warning)}
                 </div>
               ))}
               {!data ? (
                 <div className="panel">
-                  <Empty icon={<Database size={34} />} title="Ready to analyze">
+                  <Empty icon={<Database size={34} />} title={t('Ready to analyze')}>
                     <p>
-                      Refresh this save to resolve players, check integrity and import minifaces.
+                      {t(
+                        'Refresh this save to resolve players, check integrity and import minifaces.',
+                      )}{' '}
                     </p>
                     <button
                       className="button primary"
@@ -851,7 +864,7 @@ export function App() {
                       onClick={() => void refresh()}
                     >
                       <RefreshCw size={16} />
-                      Analyze selected save
+                      {t('Analyze selected save')}{' '}
                     </button>
                   </Empty>
                 </div>
@@ -902,7 +915,7 @@ export function App() {
                   disabled={!!busy}
                   onClick={() => void editCareer(current.careerId, current.save.id)}
                 >
-                  Career settings — {current.save.metadata.clubName}
+                  {t('Career settings —')} {current.save.metadata.clubName}
                 </button>
               )}
               <SettingsPage disabled={!!busy} task={task} />
@@ -912,7 +925,7 @@ export function App() {
             <CareerSettingsForm
               key={`${careerEditor.settings.careerId}:${careerEditor.settings.saveId}`}
               settings={careerEditor.settings}
-              error={error}
+              error={message(error)}
               disabled={!!busy}
               openAfterSave={careerEditor.openAfterSave}
               onClose={() => setCareerEditor(null)}
@@ -940,10 +953,10 @@ export function App() {
           <footer>
             <span>FC26 CAREER LENS</span>
             <span>
-              Built for the long game. <span className="footer-dot">·</span> All data stays on this
-              device.
+              {t('Built for the long game.')} <span className="footer-dot">·</span>{' '}
+              {t('All data stays on this device.')}{' '}
             </span>
-            <span>Unofficial fan project</span>
+            <span>{t('Unofficial fan project')}</span>
           </footer>
         </main>
       </div>
@@ -960,6 +973,7 @@ function SaveChoices({
   disabled: boolean;
   onSelect: (id: string) => void;
 }) {
+  const { t, date, message } = useI18n();
   return (
     <ul className="save-choices">
       {saves
@@ -974,12 +988,12 @@ function SaveChoices({
                 <strong>{save.fileName}</strong>
                 <small>
                   {save.metadata.clubName} · {date(save.modifiedAt)}
-                  {save.missing ? ' · Missing' : ''}
+                  {save.missing ? t(' · Missing') : ''}
                 </small>
               </span>
               <ArrowRight size={16} />
             </button>
-            {save.error && <small className="inline-warning">{save.error}</small>}
+            {save.error && <small className="inline-warning">{message(save.error)}</small>}
           </li>
         ))}
     </ul>
@@ -994,6 +1008,7 @@ function IntegrityPanel({
   disabled: boolean;
   onResolve: (issue: Issue, recordKey: string | null) => void;
 }) {
+  const { t, formatBirthDate, message } = useI18n();
   const i = data.integrity;
   const problem =
     i.ambiguousCount > 0 ||
@@ -1006,35 +1021,40 @@ function IntegrityPanel({
         <span>
           {problem ? <AlertTriangle size={17} /> : <ShieldCheck size={17} />}
           <strong>
-            {problem ? 'Some player records need attention' : 'Player integrity checked'}
+            {problem ? t('Some player records need attention') : t('Player integrity checked')}
           </strong>
         </span>
         <span>
-          First team {i.firstTeamResolved}/{i.firstTeamExpected} · Academy {i.youthResolved}/
-          {i.youthExpected} <ChevronDown size={15} />
+          {t('First team')} {i.firstTeamResolved}/{i.firstTeamExpected} {t('· Academy')}{' '}
+          {i.youthResolved}/{i.youthExpected} <ChevronDown size={15} />
         </span>
       </summary>
       <div className="integrity-body">
         <p>
-          {i.ambiguousCount} ambiguous · {i.unresolvedCount} unresolved. Counts are resolved /
-          expected. Ambiguous players are retained here and excluded from attributed player
-          statistics.
+          {i.ambiguousCount} {t('ambiguous ·')} {i.unresolvedCount}{' '}
+          {t(
+            'unresolved. Counts are resolved / expected. Ambiguous players are retained here and excluded from attributed player statistics.',
+          )}{' '}
         </p>
         {data.issues.map((issue, index) => (
           <div className="issue" key={index}>
             <strong>{issue.code}</strong>
-            <p>{issue.message}</p>
+            <p>{message(issue.message)}</p>
             {issue.code === 'PLAYER_RECORD_AMBIGUOUS' && (
               <p>
                 {issue.candidates?.some((c) => c.player)
-                  ? 'Recognize your player? Select the matching record below. This choice applies only to this snapshot and does not modify your game save.'
-                  : 'Refresh save to load selectable records. If no options appear, the squad membership also needs verification.'}
+                  ? t(
+                      'Recognize your player? Select the matching record below. This choice applies only to this snapshot and does not modify your game save.',
+                    )
+                  : t(
+                      'Refresh save to load selectable records. If no options appear, the squad membership also needs verification.',
+                    )}
               </p>
             )}
             {issue.candidates?.map((candidate) => (
               <div key={candidate.recordKey} className="candidate">
                 <span>
-                  {candidate.displayName} · OVR {value(candidate.overall)} · Born{' '}
+                  {candidate.displayName} {t('· OVR')} {value(candidate.overall)} {t('· Born')}{' '}
                   {formatBirthDate(candidate.birthDate)}
                 </span>
                 {candidate.player &&
@@ -1047,8 +1067,8 @@ function IntegrityPanel({
                       onClick={() => onResolve(issue, candidate.recordKey)}
                     >
                       {issue.selectedRecordKey === candidate.recordKey
-                        ? `Selected: ${candidate.displayName}`
-                        : `Use ${candidate.displayName}`}
+                        ? t('Selected: {player}', { player: candidate.displayName })
+                        : t('Use {player}', { player: candidate.displayName })}
                     </button>
                   )}
               </div>
@@ -1059,13 +1079,13 @@ function IntegrityPanel({
                 disabled={disabled}
                 onClick={() => onResolve(issue, null)}
               >
-                Undo selection
+                {t('Undo selection')}{' '}
               </button>
             )}
           </div>
         ))}
         {data.metadata.warnings.map((w) => (
-          <p key={w}>{w}</p>
+          <p key={message(w)}>{message(w)}</p>
         ))}
       </div>
     </details>
@@ -1080,6 +1100,7 @@ function Overview({
   onNavigate: (page: Page) => void;
   onPlayer: (p: CareerPlayer) => void;
 }) {
+  const { t, date, position, formatBirthDate } = useI18n();
   const data = current.data!;
   const players = data.players;
   const high = (field: 'overall' | 'potential') =>
@@ -1093,27 +1114,29 @@ function Overview({
     <>
       <div className="metrics">
         <Metric
-          label="FIRST TEAM"
+          label={t('FIRST TEAM')}
           amount={data.integrity.firstTeamResolved}
-          detail={`of ${data.integrity.firstTeamExpected} linked players resolved`}
+          detail={t('of {count} linked players resolved', {
+            count: data.integrity.firstTeamExpected,
+          })}
           icon={<Users size={20} />}
         />
         <Metric
-          label="YOUTH ACADEMY"
+          label={t('YOUTH ACADEMY')}
           amount={data.integrity.youthResolved}
-          detail={`of ${data.integrity.youthExpected} prospects resolved`}
+          detail={t('of {count} prospects resolved', { count: data.integrity.youthExpected })}
           icon={<TrendingUp size={20} />}
         />
         <Metric
-          label="HIGHEST OVERALL"
+          label={t('HIGHEST OVERALL')}
           amount={high('overall')}
-          detail="Across resolved player records"
+          detail={t('Across resolved player records')}
           icon={<Activity size={20} />}
         />
         <Metric
-          label="HIGHEST POTENTIAL"
+          label={t('HIGHEST POTENTIAL')}
           amount={high('potential')}
-          detail="Across resolved player records"
+          detail={t('Across resolved player records')}
           icon={<TrendingUp size={20} />}
           accent
         />
@@ -1122,11 +1145,11 @@ function Overview({
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">THE NEXT GENERATION</span>
-              <h2>Academy watch</h2>
+              <span className="eyebrow">{t('THE NEXT GENERATION')}</span>
+              <h2>{t('Academy watch')}</h2>
             </div>
             <button className="text-button" onClick={() => onNavigate('youth')}>
-              View academy <ArrowRight size={15} />
+              {t('View academy')} <ArrowRight size={15} />
             </button>
           </div>
           {prospects.length ? (
@@ -1137,16 +1160,16 @@ function Overview({
                   <span className="watch-name">
                     <strong>{p.displayName}</strong>
                     <small>
-                      {p.primaryPosition ? POSITION_LABELS[p.primaryPosition] : 'N/A'} ·{' '}
-                      {p.age == null ? 'Age —' : `${p.age} years`}
+                      {p.primaryPosition ? position(p.primaryPosition) : 'N/A'} ·{' '}
+                      {p.age == null ? t('Age —') : t('{count} years', { count: p.age })}
                     </small>
                   </span>
                   <span className="watch-rating">
-                    <small>OVR</small>
+                    <small>{t('OVR')}</small>
                     {value(p.overall)}
                   </span>
                   <span className="watch-rating green-text">
-                    <small>POT</small>
+                    <small>{t('POT')}</small>
                     {value(p.potential)}
                   </span>
                   <ChevronRight size={16} />
@@ -1154,60 +1177,61 @@ function Overview({
               ))}
             </div>
           ) : (
-            <Empty icon={<Users size={28} />} title="No resolved prospects">
-              <p>Academy records will appear after a successful import.</p>
+            <Empty icon={<Users size={28} />} title={t('No resolved prospects')}>
+              <p>{t('Academy records will appear after a successful import.')}</p>
             </Empty>
           )}
         </section>
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">YOUR CURRENT CONTEXT</span>
-              <h2>Snapshot details</h2>
+              <span className="eyebrow">{t('YOUR CURRENT CONTEXT')}</span>
+              <h2>{t('Snapshot details')}</h2>
             </div>
             <Database size={20} />
           </div>
           <dl className="detail-list">
-            <dt>Imported</dt>
+            <dt>{t('Imported')}</dt>
             <dd>{date(current.createdAt)}</dd>
-            <dt>Last match</dt>
+            <dt>{t('Last match')}</dt>
             <dd>{formatBirthDate(data.careerDateInfo?.lastMatchDate)}</dd>
-            <dt>Next match</dt>
+            <dt>{t('Next match')}</dt>
             <dd>
               {data.careerDateInfo?.nextMatchDate
                 ? formatBirthDate(data.careerDateInfo.nextMatchDate)
-                : 'Unavailable'}
+                : t('Unavailable')}
             </dd>
-            <dt>Age reference date</dt>
+            <dt>{t('Age reference date')}</dt>
             <dd>
               {data.careerDateInfo?.referenceDate
                 ? formatBirthDate(data.careerDateInfo.referenceDate)
-                : 'Unavailable'}
+                : t('Unavailable')}
             </dd>
-            <dt>Date source</dt>
+            <dt>{t('Date source')}</dt>
             <dd>
               {data.careerDateInfo?.referenceDateSource === 'SAVE_LAST_MATCH'
-                ? 'Last match in save'
+                ? t('Last match in save')
                 : data.careerDateInfo?.referenceDateSource === 'MATCH_HISTORY'
-                  ? 'Played match history'
-                  : 'Unavailable'}
+                  ? t('Played match history')
+                  : t('Unavailable')}
             </dd>
-            <dt>Latest available</dt>
+            <dt>{t('Latest available')}</dt>
             <dd className="wrap">{current.latestSave?.fileName ?? 'N/A'}</dd>
-            <dt>Career identity</dt>
+            <dt>{t('Career identity')}</dt>
             <dd>
               {data.metadata.identityStatus === 'CONFIRMED'
-                ? 'Confirmed'
-                : 'Unconfirmed · separate save'}
+                ? t('Confirmed')
+                : t('Unconfirmed · separate save')}
             </dd>
-            <dt>Snapshot</dt>
+            <dt>{t('Snapshot')}</dt>
             <dd className="mono wrap">{current.snapshotId}</dd>
           </dl>
           <div className="panel-note">
             <ShieldCheck size={18} />
             <p>
-              Ages refer to the last completed match, which may differ from the current day in your
-              career. Only this career and selected save are included in your workbook.
+              {t(
+                'Ages refer to the last completed match, which may differ from the current day in your career. Only this career and selected save are included in your workbook.',
+              )}{' '}
             </p>
           </div>
         </section>
@@ -1215,10 +1239,10 @@ function Overview({
       <section className="panel position-panel">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">SQUAD COMPOSITION</span>
-            <h2>Coverage by position</h2>
+            <span className="eyebrow">{t('SQUAD COMPOSITION')}</span>
+            <h2>{t('Coverage by position')}</h2>
           </div>
-          <Badge>First team · resolved players</Badge>
+          <Badge>{t('First team · resolved players')}</Badge>
         </div>
         <div className="position-chart">
           {POSITION_ORDER.map((pos) => {
@@ -1231,7 +1255,7 @@ function Overview({
                 <div className="bar-track">
                   <div style={{ height: `${Math.min(count * 16, 100)}%` }} />
                 </div>
-                <span>{POSITION_LABELS[pos]}</span>
+                <span>{position(pos)}</span>
               </div>
             );
           })}
@@ -1278,6 +1302,7 @@ function SquadTable({
   onFilter: (f: Filter) => void;
   onPlayer: (p: CareerPlayer) => void;
 }) {
+  const { t, money, position, formatBirthDate } = useI18n();
   const [advanced, setAdvanced] = useState(false);
   const update = (key: keyof Filter, input: string | boolean) =>
     onFilter({ ...filter, [key]: input });
@@ -1304,16 +1329,18 @@ function SquadTable({
     filter.direction,
   );
   const columns: { field: SortField; label: string }[] = [
-    { field: 'displayName', label: 'Player' },
-    { field: 'age', label: 'Age' },
-    { field: 'birthDate', label: 'Date of birth' },
-    { field: 'primaryPosition', label: 'Position' },
-    { field: 'secondaryPositions', label: 'Secondary' },
-    { field: 'overall', label: 'OVR' },
-    { field: 'potential', label: 'POT' },
-    ...(squad === 'YOUTH' ? [{ field: 'growthMargin' as const, label: 'Growth' }] : []),
-    ...(squad === 'FIRST_TEAM' ? [{ field: 'contractEndYear' as const, label: 'Contract' }] : []),
-    { field: 'weeklyWage', label: 'Weekly wage' },
+    { field: 'displayName', label: t('Player') },
+    { field: 'age', label: t('Age') },
+    { field: 'birthDate', label: t('Date of birth') },
+    { field: 'primaryPosition', label: t('Position') },
+    { field: 'secondaryPositions', label: t('Secondary') },
+    { field: 'overall', label: t('OVR') },
+    { field: 'potential', label: t('POT') },
+    ...(squad === 'YOUTH' ? [{ field: 'growthMargin' as const, label: t('Growth') }] : []),
+    ...(squad === 'FIRST_TEAM'
+      ? [{ field: 'contractEndYear' as const, label: t('Contract') }]
+      : []),
+    { field: 'weeklyWage', label: t('Weekly wage') },
   ];
   function sort(field: SortField) {
     onFilter({
@@ -1335,21 +1362,21 @@ function SquadTable({
         <label className="search">
           <Search size={17} />
           <input
-            aria-label="Search players"
-            placeholder="Search players…"
+            aria-label={t('Search players')}
+            placeholder={t('Search players…')}
             value={filter.search}
             onChange={(e) => update('search', e.target.value)}
           />
         </label>
         <select
-          aria-label="Filter by position"
+          aria-label={t('Filter by position')}
           value={filter.position}
           onChange={(e) => update('position', e.target.value)}
         >
-          <option value="">All positions</option>
+          <option value="">{t('All positions')}</option>
           {POSITION_ORDER.map((p) => (
             <option key={p} value={p}>
-              {POSITION_LABELS[p]}
+              {position(p)}
             </option>
           ))}
         </select>
@@ -1359,14 +1386,16 @@ function SquadTable({
           onClick={() => setAdvanced(!advanced)}
         >
           <SlidersHorizontal size={15} />
-          Filters
+          {t('Filters')}{' '}
         </button>
         <span className="toolbar-spacer" />
-        <span className="muted">{visible.length} players</span>
+        <span className="muted">
+          {visible.length} {t('players')}
+        </span>
         {squad === 'YOUTH' && (
           <div className="view-toggle">
             <button
-              aria-label="Table view"
+              aria-label={t('Table view')}
               aria-pressed={!filter.cards}
               className={!filter.cards ? 'selected' : ''}
               onClick={() => update('cards', false)}
@@ -1374,7 +1403,7 @@ function SquadTable({
               <List size={17} />
             </button>
             <button
-              aria-label="Card view"
+              aria-label={t('Card view')}
               aria-pressed={filter.cards}
               className={filter.cards ? 'selected' : ''}
               onClick={() => update('cards', true)}
@@ -1387,35 +1416,35 @@ function SquadTable({
       {advanced && (
         <div className="advanced-filters">
           {[
-            ['Age', 'ageMin', 'ageMax'],
-            ['OVR', 'ovrMin', 'ovrMax'],
-            ['POT', 'potMin', 'potMax'],
+            [t('Age'), 'ageMin', 'ageMax'],
+            [t('OVR'), 'ovrMin', 'ovrMax'],
+            [t('POT'), 'potMin', 'potMax'],
           ].map(([label, min, max]) => (
             <fieldset key={label}>
               <legend>{label}</legend>
               <input
                 type="number"
-                aria-label={`Minimum ${label}`}
+                aria-label={t('Minimum {label}', { label })}
                 min="0"
                 max="100"
-                placeholder="Min"
+                placeholder={t('Min')}
                 value={filter[min as keyof Filter] as string}
                 onChange={(e) => update(min as keyof Filter, e.target.value)}
               />
               <span>–</span>
               <input
                 type="number"
-                aria-label={`Maximum ${label}`}
+                aria-label={t('Maximum {label}', { label })}
                 min="0"
                 max="100"
-                placeholder="Max"
+                placeholder={t('Max')}
                 value={filter[max as keyof Filter] as string}
                 onChange={(e) => update(max as keyof Filter, e.target.value)}
               />
             </fieldset>
           ))}
           <button className="text-button" onClick={() => onFilter(initialFilter())}>
-            Reset filters
+            {t('Reset filters')}{' '}
           </button>
         </div>
       )}
@@ -1423,7 +1452,7 @@ function SquadTable({
         <>
           <div className="card-sort">
             <label>
-              Sort by{' '}
+              {t('Sort by')}{' '}
               <select
                 value={filter.sort}
                 onChange={(e) => onFilter({ ...filter, sort: e.target.value as SortField })}
@@ -1436,7 +1465,14 @@ function SquadTable({
               </select>
             </label>
             <button className="button small" onClick={() => sort(filter.sort)}>
-              {filter.direction} <ArrowUpDown size={14} />
+              {t(
+                filter.direction === 'asc'
+                  ? 'Ascending'
+                  : filter.direction === 'desc'
+                    ? 'Descending'
+                    : 'Default order',
+              )}{' '}
+              <ArrowUpDown size={14} />
             </button>
           </div>
           <div className="prospect-grid">
@@ -1445,20 +1481,20 @@ function SquadTable({
                 <Avatar player={p} large />
                 <h3>{p.displayName}</h3>
                 <p>
-                  {p.primaryPosition ? POSITION_LABELS[p.primaryPosition] : 'N/A'} · Age{' '}
-                  {p.age ?? '—'} · Born {formatBirthDate(p.birthDate)}
+                  {p.primaryPosition ? position(p.primaryPosition) : 'N/A'} {t('· Age')}{' '}
+                  {p.age ?? '—'} {t('· Born')} {formatBirthDate(p.birthDate)}
                 </p>
                 <div>
                   <span>
-                    <small>OVR</small>
+                    <small>{t('OVR')}</small>
                     <strong>{value(p.overall)}</strong>
                   </span>
                   <span>
-                    <small>POT</small>
+                    <small>{t('POT')}</small>
                     <strong className="green-text">{value(p.potential)}</strong>
                   </span>
                   <span>
-                    <small>GROWTH</small>
+                    <small>{t('GROWTH')}</small>
                     <strong>
                       {p.growthMargin == null
                         ? 'N/A'
@@ -1475,7 +1511,7 @@ function SquadTable({
           <table>
             <thead>
               <tr>
-                <th className="photo-heading">Photo</th>
+                <th className="photo-heading">{t('Photo')}</th>
                 {columns.map((c) => (
                   <th
                     key={c.field}
@@ -1520,17 +1556,15 @@ function SquadTable({
                       {p.displayName}
                     </button>
                     <small className="player-nationality">
-                      {p.nationality ?? `Player ID ${p.playerId}`}
+                      {p.nationality ?? t('Player ID {id}', { id: p.playerId })}
                     </small>
                   </td>
                   <td>{p.age ?? '—'}</td>
                   <td>{formatBirthDate(p.birthDate)}</td>
                   <td>
-                    <Badge>{p.primaryPosition ? POSITION_LABELS[p.primaryPosition] : 'N/A'}</Badge>
+                    <Badge>{p.primaryPosition ? position(p.primaryPosition) : 'N/A'}</Badge>
                   </td>
-                  <td>
-                    {p.secondaryPositions.map((pos) => POSITION_LABELS[pos]).join(' / ') || '—'}
-                  </td>
+                  <td>{p.secondaryPositions.map((pos) => position(pos)).join(' / ') || '—'}</td>
                   <td>
                     <strong className="rating-number">{value(p.overall)}</strong>
                   </td>
@@ -1553,15 +1587,18 @@ function SquadTable({
         </div>
       )}
       {!visible.length && (
-        <Empty icon={<Search size={28} />} title="No matching players">
-          <p>Adjust your filters or review unresolved records above.</p>
+        <Empty icon={<Search size={28} />} title={t('No matching players')}>
+          <p>{t('Adjust your filters or review unresolved records above.')}</p>
         </Empty>
       )}
       <div className="table-footer">
-        <span>Showing {visible.length} resolved players</span>
         <span>
-          Age is as of the last completed match, not today's career calendar. — / N/A means
-          unavailable.
+          {t('Showing')} {visible.length} {t('resolved players')}
+        </span>
+        <span>
+          {t(
+            "Age is as of the last completed match, not today's career calendar. — / N/A means unavailable.",
+          )}{' '}
         </span>
       </div>
     </section>
@@ -1581,6 +1618,7 @@ function PlayerDetail({
   onBack: () => void;
   onImage: (file: File | null) => Promise<void>;
 }) {
+  const { t, date, money, position, formatBirthDate, attribute, message } = useI18n();
   const [history, setHistory] = useState<{ created_at: string; data: CareerPlayer }[]>([]);
   const [historyError, setHistoryError] = useState('');
   useEffect(() => {
@@ -1602,33 +1640,33 @@ function PlayerDetail({
     <>
       <button className="text-button back" onClick={onBack}>
         <ArrowLeft size={16} />
-        Back to squad
+        {t('Back to squad')}{' '}
       </button>
       <div className="player-profile panel">
         <Avatar player={player} large />
         <div>
-          <Badge>{player.squadType === 'YOUTH' ? 'Youth academy' : 'First team'}</Badge>
+          <Badge>{player.squadType === 'YOUTH' ? t('Youth academy') : t('First team')}</Badge>
           <h2>{player.displayName}</h2>
           <p>
-            {player.primaryPosition ? POSITION_LABELS[player.primaryPosition] : 'Position N/A'} ·{' '}
-            {player.nationality ?? 'Nationality N/A'} · Age {player.age ?? '—'}
+            {player.primaryPosition ? position(player.primaryPosition) : t('Position N/A')} ·{' '}
+            {player.nationality ?? t('Nationality N/A')} {t('· Age')} {player.age ?? '—'}
           </p>
           <small>
-            Player ID {player.playerId} ·{' '}
+            {t('Player ID')} {player.playerId} ·{' '}
             {player.image?.source === 'MANUAL'
-              ? 'Manual portrait'
+              ? t('Manual portrait')
               : player.image
-                ? 'Local miniface'
-                : 'No portrait available'}
+                ? t('Local miniface')
+                : t('No portrait available')}
           </small>
         </div>
         <div className="profile-ratings">
           <span>
-            <small>OVERALL</small>
+            <small>{t('OVERALL')}</small>
             <strong>{value(player.overall)}</strong>
           </span>
           <span>
-            <small>POTENTIAL</small>
+            <small>{t('POTENTIAL')}</small>
             <strong className="green-text">{value(player.potential)}</strong>
           </span>
         </div>
@@ -1636,11 +1674,11 @@ function PlayerDetail({
       <div className="profile-actions">
         <label className={`button ${disabled ? 'disabled' : ''}`}>
           <Upload size={16} />
-          Change portrait
+          {t('Change portrait')}{' '}
           <input
             type="file"
             className="file-input"
-            aria-label="Upload player portrait"
+            aria-label={t('Upload player portrait')}
             accept=".dds,.png,.jpg,.jpeg,.webp"
             disabled={disabled}
             onChange={(e) => {
@@ -1652,67 +1690,74 @@ function PlayerDetail({
         </label>
         {player.image?.source === 'MANUAL' && (
           <button className="button" disabled={disabled} onClick={() => void onImage(null)}>
-            Remove manual portrait
+            {t('Remove manual portrait')}{' '}
           </button>
         )}
-        <span className="muted">DDS, PNG, JPG or WEBP · up to 10 MB</span>
+        <span className="muted">{t('DDS, PNG, JPG or WEBP · up to 10 MB')}</span>
       </div>
       <div className="overview-grid">
         <section className="panel">
           <div className="panel-heading">
-            <h2>Player details</h2>
+            <h2>{t('Player details')}</h2>
           </div>
           <dl className="detail-list">
-            <dt>Date of birth</dt>
+            <dt>{t('Date of birth')}</dt>
             <dd>{formatBirthDate(player.birthDate)}</dd>
-            <dt>Age reference (last match)</dt>
+            <dt>{t('Age reference (last match)')}</dt>
             <dd>{formatBirthDate(current.data?.careerDateInfo?.referenceDate)}</dd>
-            <dt>Secondary positions</dt>
-            <dd>{player.secondaryPositions.map((p) => POSITION_LABELS[p]).join(', ') || 'N/A'}</dd>
-            <dt>Growth margin</dt>
+            <dt>{t('Secondary positions')}</dt>
+            <dd>{player.secondaryPositions.map((p) => position(p)).join(', ') || 'N/A'}</dd>
+            <dt>{t('Growth margin')}</dt>
             <dd>{value(player.growthMargin)}</dd>
-            <dt>{player.squadType === 'YOUTH' ? 'Academy agreement' : 'Contract end year'}</dt>
+            <dt>
+              {player.squadType === 'YOUTH' ? t('Academy agreement') : t('Contract end year')}
+            </dt>
             <dd>{value(player.contractEndYear)}</dd>
-            <dt>Weekly wage (game units)</dt>
+            <dt>{t('Weekly wage (game units)')}</dt>
             <dd>{money(player.weeklyWage)}</dd>
-            <dt>Appearances / minutes</dt>
+            <dt>{t('Appearances / minutes')}</dt>
             <dd>
               {value(player.appearances)} / {value(player.minutes)}
             </dd>
-            <dt>Average rating</dt>
+            <dt>{t('Average rating')}</dt>
             <dd>{value(player.averageRating)}</dd>
           </dl>
         </section>
         <section className="panel">
           <div className="panel-heading">
-            <h2>Recorded development</h2>
+            <h2>{t('Recorded development')}</h2>
           </div>
-          {historyError && <p className="inline-warning">{historyError}</p>}
+          {historyError && <p className="inline-warning">{message(historyError)}</p>}
           <div className="history-list">
             {history.map((entry, i) => (
               <div key={i}>
                 <Clock3 size={16} />
                 <span>{date(entry.created_at)}</span>
-                <strong>OVR {value(entry.data.overall)}</strong>
-                <strong className="green-text">POT {value(entry.data.potential)}</strong>
+                <strong>
+                  {t('OVR')} {value(entry.data.overall)}
+                </strong>
+                <strong className="green-text">
+                  {t('POT')} {value(entry.data.potential)}
+                </strong>
               </div>
             ))}
           </div>
           <p className="panel-description">
-            History is scoped to this career and verified player record. Unconfirmed save identities
-            are kept separate across changed file contents.
+            {t(
+              'History is scoped to this career and verified player record. Unconfirmed save identities are kept separate across changed file contents.',
+            )}{' '}
           </p>
         </section>
       </div>
       {Object.keys(player.attributes ?? {}).length > 0 && (
         <section className="panel">
           <div className="panel-heading">
-            <h2>Player attributes</h2>
+            <h2>{t('Player attributes')}</h2>
           </div>
           <dl className="attribute-grid">
             {Object.entries(player.attributes ?? {}).map(([name, rating]) => (
               <div key={name}>
-                <dt>{name.replaceAll('_', ' ')}</dt>
+                <dt>{attribute(name)}</dt>
                 <dd>{value(rating)}</dd>
               </div>
             ))}
@@ -1723,6 +1768,7 @@ function PlayerDetail({
   );
 }
 function Development({ current }: { current: Current }) {
+  const { t, date, message } = useI18n();
   const [snapshots, setSnapshots] = useState<
     { id: string; save_id: string; hash: string; created_at: string }[]
   >([]);
@@ -1744,16 +1790,19 @@ function Development({ current }: { current: Current }) {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">CAREER ARCHIVE</span>
-          <h2>Snapshot history</h2>
+          <span className="eyebrow">{t('CAREER ARCHIVE')}</span>
+          <h2>{t('Snapshot history')}</h2>
         </div>
-        <Badge>{snapshots.length} snapshots</Badge>
+        <Badge>
+          {snapshots.length} {t('snapshots')}
+        </Badge>
       </div>
       <p className="panel-description">
-        Each import preserves the state of the selected save. Open a player to view recorded
-        ratings. Cross-save comparisons require confirmed career and player identities.
+        {t(
+          'Each import preserves the state of the selected save. Open a player to view recorded ratings. Cross-save comparisons require confirmed career and player identities.',
+        )}{' '}
       </p>
-      {error && <p className="inline-warning">{error}</p>}
+      {error && <p className="inline-warning">{message(error)}</p>}
       <div className="history-list">
         {snapshots.map((s, i) => (
           <div key={s.id}>
@@ -1763,7 +1812,7 @@ function Development({ current }: { current: Current }) {
               <small className="mono">{s.id}</small>
             </span>
             <Badge tone={s.id === current.snapshotId ? 'green' : 'neutral'}>
-              {s.id === current.snapshotId ? 'Selected' : 'Archived'}
+              {s.id === current.snapshotId ? t('Selected') : t('Archived')}
             </Badge>
           </div>
         ))}
@@ -1772,13 +1821,50 @@ function Development({ current }: { current: Current }) {
   );
 }
 
-function SettingsPage({
+function SettingsPage(props: {
+  disabled: boolean;
+  task: (label: string, fn: () => Promise<void>) => Promise<void>;
+}) {
+  const { t, locale, setLocale } = useI18n();
+  return (
+    <>
+      <section className="panel language-panel" aria-labelledby="language-title">
+        <div className="panel-heading">
+          <h2 id="language-title">{t('Language')}</h2>
+        </div>
+        <div className="settings-fields">
+          <label>
+            {t('Interface language')}
+            <select
+              value={locale}
+              onChange={(event) => {
+                if (isLocale(event.target.value)) setLocale(event.target.value);
+              }}
+              aria-describedby="language-hint"
+            >
+              {languages.map((language) => (
+                <option key={language.value} value={language.value} lang={language.value}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
+            <small id="language-hint">{t('Applied immediately and saved on this browser.')}</small>
+          </label>
+        </div>
+      </section>
+      <SettingsFiles {...props} />
+    </>
+  );
+}
+
+function SettingsFiles({
   disabled,
   task,
 }: {
   disabled: boolean;
   task: (label: string, fn: () => Promise<void>) => Promise<void>;
 }) {
+  const { t, message } = useI18n();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
   const [localError, setLocalError] = useState('');
@@ -1801,35 +1887,35 @@ function SettingsPage({
   if (localError)
     return (
       <div className="banner error" role="alert">
-        {localError}
+        {message(localError)}
       </div>
     );
   if (!settings)
     return (
       <div className="banner loading" role="status">
-        Loading local configuration…
+        {t('Loading local configuration…')}{' '}
       </div>
     );
   const fields = [
     {
       key: 'saveDirectory',
-      label: 'Manager Career saves',
-      hint: 'The folder containing your CmMgr files. All matching files are inventoried.',
+      label: t('Manager Career saves'),
+      hint: t('The folder containing your CmMgr files. All matching files are inventoried.'),
     },
     {
       key: 'headDirectory',
-      label: 'First-team minifaces',
-      hint: 'Local Live Editor heads folder. Originals are copied and preserved.',
+      label: t('First-team minifaces'),
+      hint: t('Local Live Editor heads folder. Originals are copied and preserved.'),
     },
     {
       key: 'youthHeadDirectory',
-      label: 'Academy minifaces',
-      hint: 'Local Live Editor youthheads folder.',
+      label: t('Academy minifaces'),
+      hint: t('Local Live Editor youthheads folder.'),
     },
     {
       key: 'gameDirectory',
-      label: 'FC26 installation',
-      hint: 'Optional if detected automatically. Used to generate your local names database.',
+      label: t('FC26 installation'),
+      hint: t('Optional if detected automatically. Used to generate your local names database.'),
     },
   ] as const;
   return (
@@ -1837,8 +1923,8 @@ function SettingsPage({
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">FILE SOURCES</span>
-            <h2>Local folders</h2>
+            <span className="eyebrow">{t('FILE SOURCES')}</span>
+            <h2>{t('Local folders')}</h2>
           </div>
           <FolderOpen size={21} />
         </div>
@@ -1863,7 +1949,7 @@ function SettingsPage({
                   value={settings[field.key]}
                   disabled={disabled}
                   onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
-                  placeholder={field.key === 'gameDirectory' ? 'Auto-detect installation' : ''}
+                  placeholder={field.key === 'gameDirectory' ? t('Auto-detect installation') : ''}
                 />
                 <small>{field.hint}</small>
               </label>
@@ -1876,15 +1962,15 @@ function SettingsPage({
                 onChange={(e) => setSettings({ ...settings, autoImages: e.target.checked })}
               />
               <span>
-                Look for minifaces when refreshing a save
-                <small>Manual portraits take priority until removed.</small>
+                {t('Look for minifaces when refreshing a save')}{' '}
+                <small>{t('Manual portraits take priority until removed.')}</small>
               </span>
             </label>
           </div>
           <div className="settings-submit">
             <button className="button primary" disabled={disabled} type="submit">
               <Check size={16} />
-              Save settings
+              {t('Save settings')}{' '}
             </button>
           </div>
         </form>
@@ -1893,8 +1979,8 @@ function SettingsPage({
         <section className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">ENVIRONMENT</span>
-              <h2>System check</h2>
+              <span className="eyebrow">{t('ENVIRONMENT')}</span>
+              <h2>{t('System check')}</h2>
             </div>
             <Activity size={20} />
           </div>
@@ -1908,18 +1994,18 @@ function SettingsPage({
                         {
                           node: 'Node.js',
                           python: 'Python',
-                          pillow: 'Image converter',
-                          parser: 'FC26 decoder',
-                          globalNames: 'Global names',
-                          saveDirectory: 'Save folder',
-                          headDirectory: 'First-team images',
-                          youthHeadDirectory: 'Academy images',
+                          pillow: t('Image converter'),
+                          parser: t('FC26 decoder'),
+                          globalNames: t('Global names'),
+                          saveDirectory: t('Save folder'),
+                          headDirectory: t('First-team images'),
+                          youthHeadDirectory: t('Academy images'),
                         } as Record<string, string>
                       )[key]
                     }
                   </span>
                   <Badge tone={state ? 'green' : 'amber'}>
-                    {typeof state === 'string' ? state : state ? 'Ready' : 'Missing'}
+                    {typeof state === 'string' ? state : state ? t('Ready') : t('Missing')}
                   </Badge>
                 </div>
               ))}
@@ -1927,14 +2013,16 @@ function SettingsPage({
         </section>
         <section className="panel names-panel">
           <Database size={23} />
-          <h2>Player names database</h2>
+          <h2>{t('Player names database')}</h2>
           <p>
-            Resolve name IDs using files from your installed copy of FC26. Extraction runs locally
-            and may take several minutes.
+            {t(
+              'Resolve name IDs using files from your installed copy of FC26. Extraction runs locally and may take several minutes.',
+            )}{' '}
           </p>
           <p>
-            Save your installation path above before generating. Refresh a save afterward to resolve
-            its names.
+            {t(
+              'Save your installation path above before generating. Refresh a save afterward to resolve its names.',
+            )}{' '}
           </p>
           <button
             className="button"
@@ -1950,7 +2038,7 @@ function SettingsPage({
             }
           >
             <Database size={16} />
-            Generate names database
+            {t('Generate names database')}{' '}
           </button>
         </section>
       </div>
