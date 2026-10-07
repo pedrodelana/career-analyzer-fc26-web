@@ -1,0 +1,45 @@
+{
+  "name": "fc26-career-analyzer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "npm run dev -w @fc26/web",
+    "dev:api": "npm run dev -w @fc26/api",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts",
+    "test:parser": "node scripts/python.mjs -m unittest discover -s parser/tests -v",
+    "doctor": "node scripts/doctor.mjs",
+    "start:api": "node apps/api/dist/apps/api/src/index.js",
+    "preview:web": "npm run preview -w @fc26/web",
+    "test:e2e": "node scripts/smoke.mjs",
+    "test:e2e:regression": "tsx tests/ui-regression.ts",
+    "format": "prettier --write --ignore-unknown apps packages tests scripts *.json *.js docs README.md",
+    "setup:python": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/setup-python.ps1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "prettier": "^3.9.8",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.0"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  }
+}

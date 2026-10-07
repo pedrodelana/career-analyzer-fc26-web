@@ -1,0 +1,10 @@
+.tools/
+node_modules/
+data/
+storage/
+exports/
+**/dist/
+package-lock.json
+ADR_001_FC26_CAREER_ANALYZER.md
+SKILL_FC26_CAREER_ANALYZER.md
+GUARDRAIL_FC26_CAREER_ANALYZER.md

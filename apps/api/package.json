@@ -1,0 +1,17 @@
+{
+  "name": "@fc26/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "fastify": "^5.6.1",
+    "@fastify/cors": "^11.1.0",
+    "@fastify/multipart": "^9.2.1",
+    "exceljs": "^4.4.0",
+    "zod": "^4.1.12"
+  }
+}
